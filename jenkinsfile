@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the GitHub repository
+                git 'https://github.com/MOEZR1/CW02-1.git'
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                // Build the Docker image
+                script {
+                    docker.build("node-app:${env.BUILD_ID}")
+                }
+            }
+        }
+        
+        stage('Push to DockerHub') {
+            steps {
+                // Push the image to DockerHub
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        docker.image("node-app:${env.BUILD_ID}").push()
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                // Update the Kubernetes deployment
+                script {
+                    sh 'kubectl set image deployment/node-app node-app=moezr/node-app:${env.BUILD_ID}'
+A                }
+            }
+        }
+    }
+}
