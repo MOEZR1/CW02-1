@@ -11,29 +11,28 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Build the Docker image
+                // Build the Docker image with the tag "node-app:1.0"
                 script {
-                    docker.build("node-app:${env.BUILD_ID}")
+                    def dockerImage = docker.build("node-app:1.0")
                 }
             }
         }
 
-        stage('Login to DockerHub') {
+        stage('Test Docker Image') {
             steps {
-                script {
-                    // Use DockerHub credentials to log in
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-                        // You don't need to do anything here, just logging in will make DockerHub credentials available.
-                    }
-                }
+                // You can add testing steps here if needed
+                // For example, running unit tests
+                sh 'echo "Running unit tests"'
             }
         }
 
-        stage('Push to DockerHub') {
+        stage('Push Docker Image to DockerHub') {
             steps {
                 // Push the image to DockerHub
                 script {
-                    docker.image("node-app:${env.BUILD_ID}").push()
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        docker.image("node-app:1.0").push()
+                    }
                 }
             }
         }
@@ -42,9 +41,19 @@ pipeline {
             steps {
                 // Update the Kubernetes deployment
                 script {
-                    sh 'kubectl set image deployment/node-app node-app=moezr/node-app:${env.BUILD_ID}'
+                    sh 'kubectl set image deployment/node-app node-app=moezr/node-app:1.0'
                 }
             }
         }
     }
+
+    post {
+        success {
+            echo 'Deployment successful'
+        }
+        failure {
+            echo 'Deployment failed'
+        }
+    }
 }
+
