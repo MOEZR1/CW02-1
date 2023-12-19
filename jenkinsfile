@@ -44,7 +44,7 @@ pipeline {
             steps {
                 // Update the Kubernetes deployment
                 script {
-                    sh 'kubectl set image deployment/node-app node-app=moezr/node-app:1.0${env.BUILD_NUMBER}'
+                    sh 'kubectl set image deployment/my-app-deployment my-app-container=moezr/node-app:1.1${BUILD_NUMBER} --record'
                 }
             }
         }
