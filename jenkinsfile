@@ -11,27 +11,30 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Build the Docker image with the tag "node-app:1.0"
+                // Build the Docker image from your Dockerfile
                 script {
-                    def dockerImage = docker.build("node-app:1.0")
+                    def dockerImage = docker.build("moezr/node-app:${env.BUILD_NUMBER}")
                 }
             }
         }
 
         stage('Test Docker Image') {
             steps {
-                // You can add testing steps here if needed
-                // For example, running unit tests
-                sh 'echo "Running unit tests"'
+                // Run a command inside the container to ensure it launches successfully
+                script {
+                    def containerId = dockerImage.run("-d -p 8080:8080")
+                    sh "docker exec $containerId echo 'Container is running'"
+                    sh "docker stop $containerId"
+                }
             }
         }
 
         stage('Push Docker Image to DockerHub') {
             steps {
-                // Push the image to DockerHub
+                // Push the Docker image to DockerHub
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-                        docker.image("node-app:1.0").push()
+                        dockerImage.push()
                     }
                 }
             }
@@ -41,7 +44,7 @@ pipeline {
             steps {
                 // Update the Kubernetes deployment
                 script {
-                    sh 'kubectl set image deployment/node-app node-app=moezr/node-app:1.0'
+                    sh 'kubectl set image deployment/node-app node-app=your-dockerhub-username/node-app:${env.BUILD_NUMBER}'
                 }
             }
         }
